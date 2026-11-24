@@ -1,5 +1,5 @@
 {
-  "name": "shelly1",
+  "name": "shellyrelay",
   "description": "Реле Shelly 1 Gen1 по локальной сети",
   "module": "index.js",
   "single": 0,
