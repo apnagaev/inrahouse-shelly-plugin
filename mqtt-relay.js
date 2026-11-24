@@ -27,7 +27,7 @@ module.exports = function connectRelay(plugin, params, publish) {
     resubscribe: false,
     queueQoSZero: false,
     username: params.mqttUsername || undefined,
-    password: params.mqttPassword ? plugin.getPassword(params, 'mqttPassword') : undefined
+    password: params.mqttPassword || plugin.getPassword(params, 'mqttPassword') || undefined
   });
 
   let subscribed = false;
