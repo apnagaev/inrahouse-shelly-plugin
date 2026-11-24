@@ -28,13 +28,7 @@
 
 Если поле режима пустое или отсутствует, используется `http`. Настройки ранее созданных экземпляров подходят для этого режима.
 
-Для MQTT и гибридного режима установите MQTT.js в установленный каталог плагина. Из этого каталога (например, `/var/lib/intrahouse/plugins/shellyrelay`) выполните:
-
-```sh
-npm ci --omit=dev --include=optional
-```
-
-Эта команда нужна, если импорт ZIP сам не установил пакет `mqtt`. Для HTTP-режима пакет не требуется.
+В ZIP из **Code → Download ZIP** уже включён MQTT.js. Импортируйте этот ZIP через **Плагины → Import** в intraHouse и перезапустите экземпляры Shelly Relay.
 
 1. Включите MQTT на Shelly и укажите брокер, доступный из сети intraHouse. В форме экземпляра заполните **URL MQTT-брокера**, например `mqtt://broker.example:1883` или `mqtts://broker.example:8883`, и при необходимости учётные данные.
 2. Укажите точный базовый топик из конфигурации реле или существующего MQTT-канала, например `shellies/shelly1-example`. Плагин подписывается на `/relay/0` и `/online`. На стороне брокера ему также нужна запись в `/relay/0/command` и `/command`, где он запрашивает начальное состояние после подписки.
@@ -78,3 +72,17 @@ npm ci --omit=dev --include=optional
 В реестре сценариев `shelly_timeoff` запускается по `shelly.timeOff`, а `shelly_auto` — по `shelly.auto`. Свойства `auto`, `timeOffmin` и `tmptimeOff` относятся к логике проекта. Оставьте их в существующем устройстве и проверьте оба сценария после смены привязок. Для проверки утюга сначала используйте отключённую нагрузку и проверьте положительный таймер автоотключения на самом Shelly.
 
 [Документация Shelly Gen1](https://shelly-api-docs.shelly.cloud/gen1/#shelly1-1pm) · [Импорт плагинов intraHouse](https://docs.intrahouse.ru/ru/plugin-install)
+
+
+## Сборка MQTT.js из исходников
+
+Готовый модуль хранится в `vendor/mqtt.cjs`. При обновлении MQTT.js соберите его из версий, закреплённых в `package-lock.json`:
+
+```sh
+npm ci --omit=dev --include=optional --ignore-scripts
+npm exec --yes --package=esbuild@0.25.12 -- esbuild node_modules/mqtt/build/index.js \
+  --bundle --platform=node --format=cjs --target=node16 --minify --legal-comments=eof \
+  --external:bufferutil --external:utf-8-validate --outfile=vendor/mqtt.cjs
+```
+
+При обновлении зависимостей обновите также `vendor/MQTT-LICENSES.txt`.

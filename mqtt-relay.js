@@ -15,13 +15,7 @@ module.exports = function connectRelay(plugin, params, publish) {
     throw new Error('Укажите базовый топик Shelly в формате shellies/имя-устройства');
   }
 
-  let mqtt;
-  try {
-    mqtt = require('mqtt');
-  } catch (error) {
-    if (error.code !== 'MODULE_NOT_FOUND') throw error;
-    throw new Error('Установите MQTT.js командой npm ci --include=optional в каталоге плагина');
-  }
+  const mqtt = require('./vendor/mqtt.cjs');
 
   const relay = topic + '/relay/0';
   const availability = topic + '/online';
