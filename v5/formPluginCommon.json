@@ -10,6 +10,12 @@
   "spacing": 10,
   "connection": [
     {
+      "prop": "protocol",
+      "title": "Режим (http, mqtt или hybrid)",
+      "type": "input",
+      "default": "http"
+    },
+    {
       "prop": "host",
       "title": "IP или имя Shelly (можно с портом)",
       "type": "input",
@@ -36,6 +42,30 @@
     {
       "prop": "password",
       "title": "Пароль HTTP",
+      "type": "password",
+      "default": ""
+    },
+    {
+      "prop": "mqttBroker",
+      "title": "URL MQTT-брокера (mqtt:// или mqtts://)",
+      "type": "input",
+      "default": ""
+    },
+    {
+      "prop": "mqttTopic",
+      "title": "Базовый топик MQTT (shellies/имя-устройства)",
+      "type": "input",
+      "default": ""
+    },
+    {
+      "prop": "mqttUsername",
+      "title": "Логин MQTT",
+      "type": "input",
+      "default": ""
+    },
+    {
+      "prop": "mqttPassword",
+      "title": "Пароль MQTT",
       "type": "password",
       "default": ""
     }
