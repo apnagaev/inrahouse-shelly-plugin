@@ -5,8 +5,8 @@ const path = require('path');
 
 function main() {
   const [project, device, ...rest] = process.argv.slice(2);
-  if (!project || rest.length || !/^d[0-9]+$/.test(device || '')) {
-    throw new Error('Использование: node extras/install.js <каталог проекта> <ID устройства dNNNN>');
+  if (!project || rest.length || (device && !/^d[0-9]+$/.test(device))) {
+    throw new Error('Использование: node extras/install.js <каталог проекта> [ID устройства dNNNN]');
   }
 
   const root = fs.realpathSync(project);
@@ -46,16 +46,30 @@ function main() {
     pending.push([file, content]);
   }
 
-  const target = db('devices.db').rows.find(row => row._id === device && !row.folder);
-  if (!target) throw new Error('Устройство не найдено: ' + device);
-  const dialogs = db('dialogs.db');
-  if (!dialogs.rows.some(row => row._id === 'dialoggroup')) throw new Error('Не найден корень диалогов');
-  const name = 'Shelly 1 · ' + device;
-  const existing = dialogs.rows.find(row => row.name === name && row.parent === 'dialoggroup' && !row.folder);
-  const dialogId = existing ? existing._id : allocate(dialogs.rows, 'di');
-  const content = JSON.stringify(dialog).replace(/__DEVICE_ID__/g, device) + '\n';
-  asset(path.join(jbase, 'dialog', dialogId + '.json'), content);
-  if (!existing) append(dialogs, [{_id: dialogId, parent: 'dialoggroup', name, order: 90000, status: 0, miss: 1}]);
+  const type = read('type.json');
+  const types = db('types.db');
+  const liveTypes = [...new Map(types.rows.map(row => [row._id, row])).values()]
+    .filter(row => !row.$$deleted);
+  if (!liveTypes.some(row => row._id === type.parent)) {
+    throw new Error('Не найден корень типов устройств');
+  }
+  const existingType = liveTypes.find(row => row.name === type.name && row.parent === type.parent && !row.folder);
+  const typeId = existingType ? existingType._id : allocate(types.rows, 't');
+  if (!existingType) append(types, [{ ...type, _id: typeId }]);
+
+  let dialogId;
+  if (device) {
+    const target = db('devices.db').rows.find(row => row._id === device && !row.folder);
+    if (!target) throw new Error('Устройство не найдено: ' + device);
+    const dialogs = db('dialogs.db');
+    if (!dialogs.rows.some(row => row._id === 'dialoggroup')) throw new Error('Не найден корень диалогов');
+    const name = 'Shelly 1 · ' + device;
+    const existing = dialogs.rows.find(row => row.name === name && row.parent === 'dialoggroup' && !row.folder);
+    dialogId = existing ? existing._id : allocate(dialogs.rows, 'di');
+    const content = JSON.stringify(dialog).replace(/__DEVICE_ID__/g, device) + '\n';
+    asset(path.join(jbase, 'dialog', dialogId + '.json'), content);
+    if (!existing) append(dialogs, [{_id: dialogId, parent: 'dialoggroup', name, order: 90000, status: 0, miss: 1}]);
+  }
 
   const staged = [];
   try {
@@ -73,7 +87,8 @@ function main() {
     for (const [, tmp] of staged) if (fs.existsSync(tmp)) fs.unlinkSync(tmp);
   }
 
-  console.log('Диалог:', dialogId);
+  console.log('Тип устройства:', typeId);
+  if (dialogId) console.log('Диалог:', dialogId);
 }
 
 try {

@@ -1,0 +1,92 @@
+{
+  "parent": "typegroup",
+  "order": 6000,
+  "name": "Shelly 1 · Реле",
+  "props": {
+    "state": {
+      "name": "Состояние",
+      "vtype": "B",
+      "op": "rw",
+      "fname": "def_rw_B",
+      "fuse": 1,
+      "format": 2,
+      "errstr_format": "",
+      "errstr": ""
+    },
+    "on": {
+      "name": "Включить",
+      "op": "cmd",
+      "vtype": "",
+      "fname": "def_cmd_state_on",
+      "when": "",
+      "trigger": "",
+      "min": 0,
+      "max": 0,
+      "dig": 0,
+      "mu": "",
+      "fuse": 1,
+      "errstr": ""
+    },
+    "off": {
+      "name": "Выключить",
+      "op": "cmd",
+      "vtype": "",
+      "fname": "def_cmd_state_off",
+      "when": "",
+      "trigger": "",
+      "min": 0,
+      "max": 0,
+      "dig": 0,
+      "mu": "",
+      "fuse": 1,
+      "errstr": ""
+    },
+    "toggle": {
+      "name": "Переключить",
+      "op": "cmd",
+      "vtype": "",
+      "fname": "def_cmd_state_toggle",
+      "when": "",
+      "trigger": "",
+      "min": 0,
+      "max": 0,
+      "dig": 0,
+      "mu": "",
+      "fuse": 1
+    },
+    "online": {
+      "name": "Связь с Shelly",
+      "vtype": "B",
+      "op": "r"
+    },
+    "timeOff": {
+      "name": "Автоотключение",
+      "op": "rw",
+      "vtype": "N",
+      "format": 1,
+      "min": 0,
+      "max": 2147483647,
+      "dig": 0,
+      "mu": "с",
+      "save": false
+    },
+    "buttontype": {
+      "order": "",
+      "name": "Режим входа SW",
+      "op": "rw",
+      "vtype": "S",
+      "fuse": 1,
+      "libhandler": "-",
+      "format": "-",
+      "min": "",
+      "max": "",
+      "def": "",
+      "dig": 0,
+      "mu": "",
+      "save": false,
+      "save_main": false,
+      "errstr": ""
+    }
+  },
+  "ruledn_pref": "SHELLY_"
+}
