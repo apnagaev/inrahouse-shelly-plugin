@@ -1,0 +1,63 @@
+{
+  "name": "shelly1",
+  "description": "Реле Shelly 1 Gen1 по локальной сети",
+  "module": "index.js",
+  "single": 0,
+  "nochannels": 0,
+  "comment": "Shelly Gen1 HTTP API",
+  "spawn": 0,
+  "channel_popup": {
+    "add": [
+      {
+        "id": "channel_node_folder",
+        "title": "Набор каналов Shelly 1"
+      },
+      {
+        "id": "channel",
+        "title": "$NewChannel"
+      }
+    ],
+    "copypaste": true,
+    "delete": true
+  },
+  "default_channel": {
+    "chan": "online",
+    "title": "Связь с Shelly",
+    "r": 1,
+    "w": 0
+  },
+  "default_channel_node_folder": {
+    "foldertype": "node",
+    "title": "Каналы Shelly 1",
+    "channels": [
+      {
+        "chan": "online",
+        "devpropname": "online",
+        "title": "Связь с Shelly",
+        "r": 1,
+        "w": 0
+      },
+      {
+        "chan": "state",
+        "devpropname": "state",
+        "title": "Состояние реле",
+        "r": 1,
+        "w": 1
+      },
+      {
+        "chan": "timeOff",
+        "devpropname": "timeOff",
+        "title": "Автоотключение, с",
+        "r": 1,
+        "w": 1
+      },
+      {
+        "chan": "buttontype",
+        "devpropname": "buttontype",
+        "title": "Режим входа SW",
+        "r": 1,
+        "w": 1
+      }
+    ]
+  }
+}

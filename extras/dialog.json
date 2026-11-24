@@ -1,0 +1,355 @@
+{
+  "settings": {
+    "x": {
+      "value": 445
+    },
+    "y": {
+      "value": -39
+    },
+    "w": {
+      "value": 640
+    },
+    "h": {
+      "value": 525
+    },
+    "scale": {
+      "value": 0.72
+    },
+    "grid": {
+      "value": 5
+    },
+    "backgroundColor": {
+      "type": "fill",
+      "value": "Canvas",
+      "fill": "Canvas",
+      "angle": 180,
+      "shape": "circle",
+      "positionX": 50,
+      "positionY": 50,
+      "extent": "closest-side"
+    },
+    "backgroundImage": {
+      "value": "unset"
+    },
+    "overlayColor": {
+      "type": "fill",
+      "value": "rgba(0,0,0,0)",
+      "fill": "rgba(0,0,0,0)",
+      "angle": 90,
+      "shape": "circle",
+      "positionX": 50,
+      "positionY": 50,
+      "extent": "closest-side",
+      "palette": [
+        {
+          "offset": "0.000",
+          "color": "#4a90e2",
+          "opacity": 0.2,
+          "id": 1
+        },
+        {
+          "offset": "1.000",
+          "color": "#9013fe",
+          "opacity": 0.16,
+          "id": 2
+        }
+      ]
+    },
+    "fitW": {
+      "value": true
+    },
+    "fitH": {
+      "value": true
+    },
+    "alignW": {
+      "value": {
+        "id": "center",
+        "title": "Center"
+      }
+    },
+    "alignH": {
+      "value": {
+        "id": "center",
+        "title": "Center"
+      }
+    },
+    "position": {
+      "value": {
+        "id": "center",
+        "title": "Center"
+      }
+    },
+    "outsideClose": {
+      "value": 1
+    }
+  },
+  "list": [
+    "shelly_controls",
+    "button_close"
+  ],
+  "elements": {
+    "shelly_controls": {
+      "borderSize": {
+        "value": 0
+      },
+      "borderRadius": {
+        "value": 0
+      },
+      "borderStyle": {
+        "value": {
+          "id": "solid",
+          "title": "Solid"
+        }
+      },
+      "borderColor": {
+        "value": "rgba(0,0,0,0)"
+      },
+      "backgroundColor": {
+        "type": "fill",
+        "value": "transparent",
+        "fill": "transparent",
+        "angle": 90,
+        "shape": "circle",
+        "positionX": 50,
+        "positionY": 50,
+        "extent": "closest-side",
+        "palette": [
+          {
+            "offset": "0.00",
+            "color": "#4A90E2",
+            "opacity": 1
+          },
+          {
+            "offset": "1.00",
+            "color": "#9013FE",
+            "opacity": 1
+          }
+        ]
+      },
+      "rotate": {
+        "value": 0
+      },
+      "animation": {},
+      "flipH": {
+        "value": false
+      },
+      "flipV": {
+        "value": false
+      },
+      "boxShadow": {
+        "active": false,
+        "value": "2px 2px 4px 0px #000000"
+      },
+      "zIndex": {
+        "value": 100
+      },
+      "opacity": {
+        "value": 100
+      },
+      "visible": {
+        "value": true
+      },
+      "overflow": {
+        "value": true
+      },
+      "code": {
+        "value": "<style>\n  .shelly-relay { color-scheme: light dark; color: CanvasText; font: 32px Arial, sans-serif; }\n  .shelly-relay h2 { font-size: 44px; margin: 8px 100px 20px 0; }\n  .shelly-relay p { margin: 0 0 22px; }\n  .shelly-relay .row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0; align-items: center; }\n  .shelly-relay :is(button, input, select) {\n    min-width: 0; width: 100%; height: 66px; box-sizing: border-box;\n    font: inherit; border: 1px solid GrayText; border-radius: 12px; padding: 0 12px;\n  }\n  .shelly-relay small { display: block; color: GrayText; font-size: 26px; }\n</style>\n<section id=\"${uuid}\" class=\"shelly-relay\">\n  <h2>Shelly 1</h2>\n  <p role=\"status\">Ожидание связи</p>\n  <div class=\"row\">\n    <button type=\"button\" data-command=\"on\" disabled>Включить</button>\n    <button type=\"button\" data-command=\"off\" disabled>Выключить</button>\n  </div>\n  <form>\n    <div class=\"row\">\n      <label for=\"${uuid}-timer\">Автоотключение, с</label>\n      <input id=\"${uuid}-timer\" type=\"number\" min=\"0\" max=\"2147483647\" step=\"1\" required disabled>\n      <small>0 отключает таймер</small>\n      <button type=\"submit\" disabled>Сохранить</button>\n    </div>\n  </form>\n  <div class=\"row\">\n    <label for=\"${uuid}-mode\">Режим входа SW</label>\n    <select id=\"${uuid}-mode\" disabled>\n      <option value=\"\" disabled>—</option>\n      <option value=\"momentary\">Кнопка</option>\n      <option value=\"toggle\">Переключатель</option>\n      <option value=\"edge\">По фронту</option>\n      <option value=\"detached\">Отвязанный</option>\n      <option value=\"action\">Действие</option>\n      <option value=\"momentary_on_release\">По отпусканию</option>\n    </select>\n  </div>\n</section>\n<script type=\"text/javascript\">\n(() => {\n  const api = window.ihapi;\n  const root = document.getElementById(uuid);\n  if (!api || !root) return;\n  const did = '__DEVICE_ID__';\n  const props = ['online', 'state', 'timeOff', 'buttontype'];\n  const subscriptions = props.map(prop => did + '_' + prop);\n  const values = Object.fromEntries(props.map(prop => [prop, api.deviceValue(did, prop)]));\n  const status = root.querySelector('[role=status]');\n  const power = [...root.querySelectorAll('[data-command]')];\n  const timer = root.querySelector('input');\n  const mode = root.querySelector('select');\n  const save = root.querySelector('[type=submit]');\n  let editingTimer = false;\n\n  function update(data) {\n    for (const prop of props) {\n      const key = did + '_' + prop;\n      if (data && Object.prototype.hasOwnProperty.call(data, key)) values[prop] = data[key];\n    }\n    const online = Number(values.online) === 1;\n    const on = Number(values.state) === 1;\n    status.textContent = online ? (on ? 'На связи · реле включено' : 'На связи · реле выключено') : 'Нет связи с реле';\n    power[0].disabled = !online || on;\n    power[1].disabled = !online || !on;\n    timer.disabled = save.disabled = mode.disabled = !online;\n    if (!editingTimer) timer.value = values.timeOff ?? '';\n    const currentMode = String(values.buttontype);\n    mode.value = [...mode.options].some(option => option.value === currentMode) ? currentMode : '';\n  }\n\n  for (const button of power) {\n    button.addEventListener('click', () => api.deviceCommand(did, button.dataset.command));\n  }\n  timer.addEventListener('input', () => { editingTimer = true; });\n  root.querySelector('form').addEventListener('submit', event => {\n    event.preventDefault();\n    if (save.disabled || !timer.reportValidity()) return;\n    const seconds = timer.valueAsNumber;\n    editingTimer = false;\n    api.deviceCommand(did, 'timeOff', seconds);\n  });\n  mode.addEventListener('change', () => {\n    if (!mode.disabled && mode.value) api.deviceCommand(did, 'buttontype', mode.value);\n  });\n  api.addEventListener(uuid, 'data', update);\n  api.addEventListener(uuid, 'destroy', () => api.deviceUnsub(uuid, subscriptions));\n  api.deviceSub(uuid, subscriptions);\n  update();\n})();\n</script>\n",
+        "active": true
+      },
+      "type": "html",
+      "_label": "shelly_controls",
+      "x": {
+        "value": 26
+      },
+      "y": {
+        "value": 22
+      },
+      "w": {
+        "value": 588
+      },
+      "h": {
+        "value": 495
+      },
+      "w2": {
+        "value": 588
+      },
+      "h2": {
+        "value": 495
+      },
+      "block_exec": {
+        "value": 0
+      }
+    },
+    "button_close": {
+      "text": {
+        "value": "×"
+      },
+      "textSize": {
+        "value": 45
+      },
+      "textBold": {
+        "value": 0
+      },
+      "textItalic": {
+        "value": 0
+      },
+      "textFontFamily": {
+        "value": {
+          "id": "Arial",
+          "title": "Arial"
+        }
+      },
+      "textAlignH": {
+        "value": {
+          "id": "center",
+          "title": "Center"
+        }
+      },
+      "textAlignV": {
+        "value": {
+          "id": "center",
+          "title": "Center"
+        }
+      },
+      "textRotate": {
+        "value": 0
+      },
+      "textColor": {
+        "value": "CanvasText"
+      },
+      "img": {
+        "value": ""
+      },
+      "imgColor": {
+        "value": "var(--lav24-ink,#28354a)"
+      },
+      "imgSize": {
+        "value": -50
+      },
+      "imgRotate": {
+        "value": 0
+      },
+      "borderSize": {
+        "value": 1
+      },
+      "borderRadius": {
+        "value": 16
+      },
+      "borderStyle": {
+        "value": {
+          "id": "solid",
+          "title": "Solid"
+        }
+      },
+      "borderColor": {
+        "value": "GrayText"
+      },
+      "backgroundColor": {
+        "type": "fill",
+        "value": "Canvas",
+        "fill": "Canvas",
+        "angle": 90,
+        "shape": "circle",
+        "positionX": 50,
+        "positionY": 50,
+        "extent": "closest-side",
+        "palette": [
+          {
+            "offset": "0.00",
+            "color": "#4A90E2",
+            "opacity": 1
+          },
+          {
+            "offset": "1.00",
+            "color": "#9013FE",
+            "opacity": 1
+          }
+        ]
+      },
+      "rotate": {
+        "value": 0
+      },
+      "animation": {},
+      "flipH": {
+        "value": false
+      },
+      "flipV": {
+        "value": false
+      },
+      "boxShadow": {
+        "active": false,
+        "value": "2px 2px 4px 0px #000000"
+      },
+      "zIndex": {
+        "value": 101
+      },
+      "opacity": {
+        "value": 100
+      },
+      "visable": {
+        "value": true
+      },
+      "overflow": {
+        "value": true
+      },
+      "colorRipple": {
+        "value": "rgba(255,255,255,1)"
+      },
+      "colorHover": {
+        "value": "rgba(0,0,0,0.2)"
+      },
+      "actions": {
+        "left": [
+          {
+            "action": "singleClickLeft",
+            "value": {},
+            "title": "close",
+            "command": "close"
+          },
+          {
+            "action": "doubleClickLeft",
+            "value": {}
+          },
+          {
+            "action": "longClickLeft",
+            "value": {}
+          },
+          {
+            "action": "mouseDownLeft",
+            "value": {}
+          },
+          {
+            "action": "mouseUpLeft",
+            "value": {}
+          }
+        ],
+        "right": [
+          {
+            "action": "singleClickRight",
+            "value": {}
+          }
+        ]
+      },
+      "type": "button",
+      "x": {
+        "value": 544
+      },
+      "y": {
+        "value": 12
+      },
+      "w": {
+        "value": 84
+      },
+      "h": {
+        "value": 84
+      },
+      "w2": {
+        "value": 84
+      },
+      "h2": {
+        "value": 84
+      },
+      "_label": "button_close"
+    }
+  }
+}

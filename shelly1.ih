@@ -1,0 +1,6 @@
+{
+  "id": "shelly1",
+  "description": "Реле Shelly 1 Gen1 по локальной сети",
+  "version": "5.1.0",
+  "cross": true
+}
