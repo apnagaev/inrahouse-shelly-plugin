@@ -19,6 +19,13 @@ module.exports = function connectRelay(plugin, params, publish) {
 
   const relay = topic + '/relay/0';
   const availability = topic + '/online';
+  // intraHouse can store a single password in ppw instead of a named field.
+  let password = params.mqttPassword;
+  if (params.ppw_mqttPassword) {
+    password = plugin.getPassword(params, 'mqttPassword');
+  } else if (params.ppw) {
+    password = plugin.getPassword(params);
+  }
   const client = mqtt.connect(url.href, {
     protocolVersion: 4,
     clean: true,
@@ -27,7 +34,7 @@ module.exports = function connectRelay(plugin, params, publish) {
     resubscribe: false,
     queueQoSZero: false,
     username: params.mqttUsername || undefined,
-    password: params.mqttPassword || plugin.getPassword(params, 'mqttPassword') || undefined
+    password: password || undefined
   });
 
   let subscribed = false;

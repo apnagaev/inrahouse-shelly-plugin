@@ -1,6 +1,6 @@
 {
   "name": "shellyrelay",
-  "version": "5.3.2",
+  "version": "5.3.3",
   "description": "Реле Shelly 1 Gen1 по локальной сети",
   "main": "index.js",
   "optionalDependencies": {
