@@ -1,10 +1,10 @@
 {
   "name": "shellyrelay",
-  "description": "Реле Shelly 1 Gen1 по HTTP и MQTT",
+  "description": "Реле Shelly 1 Gen1 и Gen3",
   "module": "index.js",
   "single": 0,
   "nochannels": 0,
-  "comment": "Shelly Gen1 HTTP / MQTT",
+  "comment": "Shelly Gen1 HTTP / MQTT; Gen3 MQTT RPC",
   "spawn": 0,
   "channel_popup": {
     "add": [
@@ -57,6 +57,20 @@
         "title": "Режим входа SW",
         "r": 1,
         "w": 1
+      },
+      {
+        "chan": "auto",
+        "devpropname": "auto",
+        "title": "Автоотключение включено",
+        "r": 1,
+        "w": 1
+      },
+      {
+        "chan": "tmptimeOff",
+        "devpropname": "tmptimeOff",
+        "title": "Запомненное время автоотключения",
+        "r": 1,
+        "w": 0
       }
     ]
   },

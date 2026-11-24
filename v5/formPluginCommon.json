@@ -10,6 +10,12 @@
   "spacing": 10,
   "connection": [
     {
+      "prop": "generation",
+      "title": "Поколение Shelly (gen1 или gen3)",
+      "type": "input",
+      "default": "gen1"
+    },
+    {
       "prop": "protocol",
       "title": "Режим (http, mqtt или hybrid)",
       "type": "input",
@@ -53,7 +59,7 @@
     },
     {
       "prop": "mqttTopic",
-      "title": "Базовый топик MQTT (shellies/имя-устройства)",
+      "title": "Точный базовый топик MQTT Shelly",
       "type": "input",
       "default": ""
     },
@@ -68,6 +74,18 @@
       "title": "Пароль MQTT",
       "type": "password",
       "default": ""
+    },
+    {
+      "prop": "gen1ResumeSeconds",
+      "title": "Gen1 · резервное время для включения Авто, с (0 без резерва)",
+      "type": "input",
+      "default": 0
+    },
+    {
+      "prop": "gen1LampControl",
+      "title": "Gen1 · синхронизировать режим SW для светильника (0 или 1)",
+      "type": "input",
+      "default": 0
     }
   ]
 }

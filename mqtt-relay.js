@@ -1,41 +1,16 @@
 'use strict';
 
-const { URL } = require('url');
+const connect = require('./mqtt-client');
 
 module.exports = function connectRelay(plugin, params, publish) {
-  const broker = String(params.mqttBroker || '').trim();
   const topic = String(params.mqttTopic || '').trim();
-  if (!broker) throw new Error('Укажите URL MQTT-брокера');
-  const url = new URL(broker);
-  if (!['mqtt:', 'mqtts:'].includes(url.protocol) || url.username || url.password ||
-      (url.pathname && url.pathname !== '/') || url.search || url.hash) {
-    throw new Error('Укажите mqtt:// или mqtts:// без пути и учётных данных в URL');
-  }
   if (!/^shellies\/[^/+#\s\x00-\x1f]+$/.test(topic)) {
     throw new Error('Укажите базовый топик Shelly в формате shellies/имя-устройства');
   }
 
-  const mqtt = require('./vendor/mqtt.cjs');
-
+  const client = connect(plugin, params);
   const relay = topic + '/relay/0';
   const availability = topic + '/online';
-  // intraHouse can store a single password in ppw instead of a named field.
-  let password = params.mqttPassword;
-  if (params.ppw_mqttPassword) {
-    password = plugin.getPassword(params, 'mqttPassword');
-  } else if (params.ppw) {
-    password = plugin.getPassword(params);
-  }
-  const client = mqtt.connect(url.href, {
-    protocolVersion: 4,
-    clean: true,
-    reconnectPeriod: 5000,
-    connectTimeout: 5000,
-    resubscribe: false,
-    queueQoSZero: false,
-    username: params.mqttUsername || undefined,
-    password: password || undefined
-  });
 
   let subscribed = false;
   let online = false;

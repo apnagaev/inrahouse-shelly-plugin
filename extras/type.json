@@ -86,6 +86,76 @@
       "save": false,
       "save_main": false,
       "errstr": ""
+    },
+    "auto": {
+      "name": "Автоотключение включено",
+      "vtype": "B",
+      "op": "rw",
+      "mu": "",
+      "save": false
+    },
+    "tmptimeOff": {
+      "name": "Запомненное время автоотключения",
+      "vtype": "N",
+      "op": "r",
+      "mu": "с",
+      "save": false
+    },
+    "initialState": {
+      "name": "Режим после подачи питания",
+      "vtype": "S",
+      "op": "rw",
+      "mu": "",
+      "save": false
+    },
+    "pulseSeconds": {
+      "name": "Включить на заданное время",
+      "vtype": "N",
+      "op": "rw",
+      "mu": "с",
+      "save": false
+    },
+    "timerRemaining": {
+      "name": "Остаток активного таймера",
+      "vtype": "N",
+      "op": "r",
+      "mu": "с",
+      "save": false
+    },
+    "input": {
+      "name": "Состояние SW",
+      "vtype": "N",
+      "op": "r",
+      "mu": "",
+      "save": false
+    },
+    "inputEvent": {
+      "name": "Событие SW",
+      "vtype": "S",
+      "op": "r",
+      "mu": "",
+      "save": false
+    },
+    "inputEventTs": {
+      "name": "Время события SW (Unix)",
+      "vtype": "N",
+      "op": "r",
+      "mu": "",
+      "save": false
+    },
+    "source": {
+      "name": "Источник переключения",
+      "vtype": "S",
+      "op": "r",
+      "mu": "",
+      "save": false
+    },
+    "rssi": {
+      "name": "Уровень сигнала Wi-Fi",
+      "vtype": "N",
+      "op": "r",
+      "mu": "дБм",
+      "save": false
     }
   },
   "ruledn_pref": "SHELLY_"

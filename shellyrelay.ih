@@ -1,6 +1,6 @@
 {
   "id": "shellyrelay",
-  "description": "Реле Shelly 1 Gen1 по HTTP и MQTT",
-  "version": "5.3.3",
+  "description": "Реле Shelly 1 Gen1 и Gen3",
+  "version": "5.4.0",
   "cross": true
 }

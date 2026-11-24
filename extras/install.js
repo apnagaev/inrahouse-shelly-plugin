@@ -1,6 +1,7 @@
 'use strict';
 
 const fs = require('fs');
+const { createHash } = require('crypto');
 const path = require('path');
 
 function main() {
@@ -36,12 +37,16 @@ function main() {
     throw new Error('Свободный ID не найден: ' + prefix);
   }
 
-  function asset(file, content) {
+  function installDialog(file, content) {
     if (fs.existsSync(file)) {
-      if (!fs.readFileSync(file).equals(Buffer.from(content))) {
-        throw new Error('Файл уже существует: ' + file);
+      const current = fs.readFileSync(file, 'utf8');
+      if (current === content) return;
+      const template = current.replace("const did = '" + device + "';", "const did = '__DEVICE_ID__';");
+      const hash = createHash('sha256').update(template).digest('hex');
+      // Upgrade the stock 5.3.3 dialog without overwriting customized dialogs.
+      if (hash !== '5fc1a6e09e3f2fc7c1974fb2466dde82a072d3f7ee681f99008f3b0b5ab9e0db') {
+        throw new Error('Диалог уже существует и отличается от штатного: ' + file);
       }
-      return;
     }
     pending.push([file, content]);
   }
@@ -55,7 +60,15 @@ function main() {
   }
   const existingType = liveTypes.find(row => row.name === type.name && row.parent === type.parent && !row.folder);
   const typeId = existingType ? existingType._id : allocate(types.rows, 't');
-  if (!existingType) append(types, [{ ...type, _id: typeId }]);
+  if (!existingType) {
+    append(types, [{ ...type, _id: typeId }]);
+  } else {
+    const props = existingType.props || {};
+    const missing = Object.entries(type.props).filter(([key]) => !Object.prototype.hasOwnProperty.call(props, key));
+    if (missing.length) {
+      append(types, [{ ...existingType, props: { ...props, ...Object.fromEntries(missing) } }]);
+    }
+  }
 
   let dialogId;
   if (device) {
@@ -67,7 +80,7 @@ function main() {
     const existing = dialogs.rows.find(row => row.name === name && row.parent === 'dialoggroup' && !row.folder);
     dialogId = existing ? existing._id : allocate(dialogs.rows, 'di');
     const content = JSON.stringify(dialog).replace(/__DEVICE_ID__/g, device) + '\n';
-    asset(path.join(jbase, 'dialog', dialogId + '.json'), content);
+    installDialog(path.join(jbase, 'dialog', dialogId + '.json'), content);
     if (!existing) append(dialogs, [{_id: dialogId, parent: 'dialoggroup', name, order: 90000, status: 0, miss: 1}]);
   }
 
