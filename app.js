@@ -3,22 +3,13 @@
 const http = require('http');
 const https = require('https');
 const { URL } = require('url');
+const { binary, integer, maxSeconds } = require('./values');
 
 const relayPath = '/relay/0';
 const settingsPath = '/settings/relay/0';
 const buttonModes = new Set([
   'momentary', 'toggle', 'edge', 'detached', 'action', 'momentary_on_release'
 ]);
-
-function integer(value, min, max, label) {
-  const validType = typeof value === 'number' ||
-    (typeof value === 'string' && /^\d+$/.test(value.trim()));
-  const number = validType ? Number(value) : NaN;
-  if (!Number.isSafeInteger(number) || number < min || number > max) {
-    throw new Error(label + ': допустимый диапазон ' + min + '–' + max);
-  }
-  return number;
-}
 
 function readOrigin(host) {
   const address = String(host || '').trim();
@@ -70,7 +61,7 @@ function commandUrl(origin, channel, value) {
     const state = integer(typeof value === 'boolean' ? Number(value) : value, 0, 1, 'Состояние');
     url.searchParams.set('turn', state ? 'on' : 'off');
   } else if (channel === 'timeOff') {
-    url.searchParams.set('auto_off', integer(value, 0, 2147483647, 'Таймер'));
+    url.searchParams.set('auto_off', integer(value, 0, maxSeconds, 'Таймер'));
   } else {
     if (!buttonModes.has(value)) throw new Error('Неизвестный режим входа SW');
     url.searchParams.set('btn_type', value);
@@ -83,6 +74,12 @@ module.exports = function start(plugin, params) {
   if (!['http', 'mqtt', 'hybrid'].includes(mode)) {
     throw new Error('Режим протокола: http, mqtt или hybrid');
   }
+  const generation = String(params.generation || 'gen1').trim().toLowerCase();
+  if (generation === 'gen3') {
+    if (mode !== 'mqtt') throw new Error('Для Shelly 1 Gen3 выберите режим mqtt');
+    return require('./gen3')(plugin, params);
+  }
+  if (generation !== 'gen1') throw new Error('Поколение Shelly: gen1 или gen3');
   const useHttp = mode !== 'mqtt';
   const origin = useHttp ? readOrigin(params.host) : undefined;
   const interval = integer(params.pollSeconds ?? 5, 1, 300, 'Опрос') * 1000;
@@ -90,6 +87,10 @@ module.exports = function start(plugin, params) {
   const auth = params.username ? String(params.username) + ':' + String(params.password || '') : undefined;
   const pollUrl = useHttp ? new URL(settingsPath, origin) : undefined;
   const commands = [];
+  const lampControl = String(params.gen1LampControl || '0') === '1';
+  const initialTimeOff = integer(params.gen1ResumeSeconds || 0, 0, maxSeconds, 'Резервный таймер');
+  let lastTimeOff = initialTimeOff;
+  let configRead = false;
   let channels = [];
   let online;
   let busy = false;
@@ -112,6 +113,7 @@ module.exports = function start(plugin, params) {
   }
 
   function publish(values) {
+    if (stopped) return;
     const ts = Date.now();
     const data = channels
       .filter(channel => channel.id && Object.prototype.hasOwnProperty.call(values, channel.chan))
@@ -131,20 +133,23 @@ module.exports = function start(plugin, params) {
             typeof response.btn_type !== 'string') {
           throw new Error('Ответ Shelly не содержит настроек реле');
         }
+        configRead = true;
         values.timeOff = response.auto_off;
         values.buttontype = response.btn_type;
+        if (values.timeOff > 0) lastTimeOff = values.timeOff;
+        values.auto = Number(values.timeOff > 0);
+        values.tmptimeOff = lastTimeOff;
       }
       if (online !== true) plugin.log('Связь с Shelly установлена');
       online = true;
       publish(values);
       if (command) {
-        const expected = command === 'state'
-          ? Number(url.searchParams.get('turn') === 'on')
-          : command === 'timeOff'
-            ? Number(url.searchParams.get('auto_off'))
-            : url.searchParams.get('btn_type');
-        if (values[command] !== expected) {
-          plugin.log('Устройство сообщило другое значение для ' + command);
+        const expected = {};
+        if (url.searchParams.has('turn')) expected.state = Number(url.searchParams.get('turn') === 'on');
+        if (url.searchParams.has('auto_off')) expected.timeOff = Number(url.searchParams.get('auto_off'));
+        if (url.searchParams.has('btn_type')) expected.buttontype = url.searchParams.get('btn_type');
+        for (const [key, value] of Object.entries(expected)) {
+          if (values[key] !== value) plugin.log('Устройство сообщило другое значение для ' + key);
         }
       }
     } catch (error) {
@@ -160,8 +165,26 @@ module.exports = function start(plugin, params) {
     try {
       if (!commands.length) await exchange(pollUrl);
       while (commands.length && !stopped) {
-        const { url, channel } = commands.shift();
-        await exchange(url, channel);
+        const { channel, value } = commands.shift();
+        try {
+          if (!configRead && ['auto', 'timeOff'].includes(channel) && (channel === 'timeOff' || !value)) {
+            await exchange(pollUrl);
+            if (!configRead) throw new Error('Не удалось прочитать текущий таймер');
+          }
+          if (channel === 'auto' && value && !lastTimeOff) {
+            await exchange(pollUrl);
+            if (!lastTimeOff) throw new Error('Сначала задайте ненулевой таймер автоотключения');
+          }
+          if (stopped) break;
+          const seconds = channel === 'auto' ? (value ? lastTimeOff : 0) : value;
+          const url = commandUrl(origin, channel === 'auto' ? 'timeOff' : channel, seconds);
+          if (lampControl && ['auto', 'timeOff'].includes(channel)) {
+            url.searchParams.set('btn_type', seconds > 0 ? 'action' : 'detached');
+          }
+          await exchange(url, channel);
+        } catch (error) {
+          plugin.log('Команда ' + channel + ' отклонена: ' + error.message);
+        }
       }
     } finally {
       busy = false;
@@ -171,11 +194,10 @@ module.exports = function start(plugin, params) {
   plugin.onAct(message => {
     for (const action of message.data || []) {
       const channel = action.chan || channels.find(item => item.id === action.id)?.chan || action.id;
-      if (!['state', 'timeOff', 'buttontype'].includes(channel)) continue;
+      if (!['state', 'timeOff', 'auto', 'buttontype'].includes(channel)) continue;
       if (mqtt && channel === 'state') {
         try {
-          const value = typeof action.value === 'boolean' ? Number(action.value) : action.value;
-          mqtt.write(integer(value, 0, 1, 'Состояние') ? 'on' : 'off');
+          mqtt.write(binary(action.value, 'Состояние') ? 'on' : 'off');
         } catch (error) {
           plugin.log('Команда state отклонена: ' + error.message);
         }
@@ -190,7 +212,8 @@ module.exports = function start(plugin, params) {
         break;
       }
       try {
-        commands.push({ url: commandUrl(origin, channel, action.value), channel });
+        const value = channel === 'auto' ? binary(action.value, 'Авто') : action.value;
+        commands.push({ channel, value });
       } catch (error) {
         plugin.log('Команда ' + channel + ' отклонена: ' + error.message);
       }
